@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captcha Solver</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        input[type="file"], input[type="text"], button {
+            display: block;
+            margin: 10px auto;
+            padding: 10px;
+            width: 80%;
+            max-width: 400px;
+        }
+        img {
+            display: block;
+            margin: 20px auto;
+            max-width: 100%;
+            height: auto;
+        }
+        .result {
+            text-align: center;
+            font-size: 1.5em;
+            color: green;
+        }
+        .error {
+            text-align: center;
+            font-size: 1.5em;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Captcha Solver</h1>
+    <input type="file" id="imageInput" accept="image/png, image/jpeg" />
+    <button id="solveButton">Solve Captcha</button>
+    <div id="imageContainer"></div>
+    <div id="resultContainer"></div>
+    <script>
+        document.getElementById('solveButton').onclick = async function() {
+            const input = document.getElementById('imageInput');
+            if (input.files.length === 0) {
+                alert('Please upload an image.');
+                return;
+            }
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const response = await fetch('/solve-image', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    displayResult(data.text);
+                } else {
+                    displayError('Failed to solve captcha.');
+                }
+            } catch (error) {
+                displayError('An error occurred: ' + error.message);
+            }
+        };
+
+        function displayResult(text) {
+            const resultContainer = document.getElementById('resultContainer');
+            resultContainer.innerHTML = `<div class="result">Solved Captcha: ${text}</div>`;
+        }
+
+        function displayError(message) {
+            const resultContainer = document.getElementById('resultContainer');
+            resultContainer.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const imageUrl = urlParams.get('url');
+        if (imageUrl) {
+            const imageContainer = document.getElementById('imageContainer');
+            imageContainer.innerHTML = `<img src="${imageUrl}" alt="Captcha Image" />`;
+            setTimeout(() => {
+                displayError('Failed to solve captcha within 15 seconds.');
+            }, 15000);
+        }
+    </script>
+</body>
+</html>
